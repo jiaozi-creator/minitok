@@ -4,8 +4,10 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
 import { CommentsModule } from './comments/comments.module'
+import { LikesModule } from './likes/likes.module'
 import { PostsModule } from './posts/posts.module'
 import { PrismaModule } from './prisma/prisma.module'
+import { UploadModule } from './upload/upload.module'
 import { UsersModule } from './users/users.module'
 
 @Module({
@@ -18,6 +20,8 @@ import { UsersModule } from './users/users.module'
     AuthModule,
     PostsModule,
     CommentsModule,
+    LikesModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

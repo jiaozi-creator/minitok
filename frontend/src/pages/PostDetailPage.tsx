@@ -4,6 +4,7 @@ import { commentService } from '../services/comment.service'
 import { postService } from '../services/post.service'
 import { useAuthStore } from '../store/auth.store'
 import type { PostDetail } from '../types/post'
+import LikeButton from '../components/LikeButton'
 
 export default function PostDetailPage() {
   const { id } = useParams()
@@ -99,7 +100,7 @@ export default function PostDetailPage() {
         <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
           <span>作者：{post.author.username}</span>
           <span>评论 {post._count.comments}</span>
-          <span>点赞 {post._count.likes}</span>
+          <LikeButton postId={post.id} initialLikesCount={post._count.likes} />
         </div>
 
         {post.coverImage && (

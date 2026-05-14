@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { postService } from '../services/post.service'
+import { uploadService } from '../services/upload.service'
 
 export default function CreatePostPage() {
   const navigate = useNavigate()
@@ -10,6 +11,8 @@ export default function CreatePostPage() {
     content: '',
     coverImage: '',
   })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,6 +23,15 @@ export default function CreatePostPage() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+
+    if (!file) return
+
+    setSelectedFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
   ) => {
@@ -28,16 +40,22 @@ export default function CreatePostPage() {
     setError('')
 
     try {
+      let coverImage = form.coverImage || undefined
+
+      if (selectedFile) {
+        const uploaded = await uploadService.uploadImage(selectedFile)
+        coverImage = uploaded.url
+      }
+
       await postService.createPost({
         title: form.title,
         content: form.content,
-        coverImage: form.coverImage || undefined,
+        coverImage,
       })
+
       navigate('/')
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message || '发布帖子失败',
-      )
+      setError(err?.response?.data?.message || '发布帖子失败')
     } finally {
       setLoading(false)
     }
@@ -48,7 +66,7 @@ export default function CreatePostPage() {
       <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
         <h1 className="text-2xl font-bold text-gray-900">发布帖子</h1>
         <p className="mt-2 text-sm text-gray-500">
-          先完成图文发布流程，后面我们再补图片上传功能
+          现在支持本地图片上传，后续可以切换到云存储
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -68,7 +86,27 @@ export default function CreatePostPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              封面图链接
+              上传封面图
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full rounded-xl border px-4 py-3"
+            />
+
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="预览图"
+                className="mt-4 h-64 w-full rounded-xl object-cover"
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              或填写封面图链接
             </label>
             <input
               name="coverImage"
@@ -76,7 +114,7 @@ export default function CreatePostPage() {
               value={form.coverImage}
               onChange={handleChange}
               className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
-              placeholder="先填图片 URL，后面再做上传功能"
+              placeholder="如果已上传本地图片，这里可以不填"
             />
           </div>
 

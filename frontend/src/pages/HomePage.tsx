@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { postService } from '../services/post.service'
 import type { PostItem } from '../types/post'
+import LikeButton from '../components/LikeButton'
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostItem[]>([])
@@ -86,7 +87,7 @@ export default function HomePage() {
 
               <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                 <span>评论 {post._count.comments}</span>
-                <span>点赞 {post._count.likes}</span>
+                <LikeButton postId={post.id} initialLikesCount={post._count.likes} />
               </div>
             </article>
           ))
