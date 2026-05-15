@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { postService } from '../services/post.service'
-import type { PostItem } from '../types/post'
 import LikeButton from '../components/LikeButton'
+import { postService } from '../services/post.service'
+import { useAuthStore } from '../store/auth.store'
+import type { PostItem } from '../types/post'
 
 export default function HomePage() {
+  const user = useAuthStore((state) => state.user)
+
   const [posts, setPosts] = useState<PostItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -23,6 +27,22 @@ export default function HomePage() {
 
     fetchPosts()
   }, [])
+
+  const handleDeletePost = async (postId: number) => {
+    const confirmed = window.confirm('确定要删除这篇帖子吗？')
+    if (!confirmed) return
+
+    setDeletingId(postId)
+
+    try {
+      await postService.deletePost(postId)
+      setPosts((prev) => prev.filter((post) => post.id !== postId))
+    } catch (err: any) {
+      alert(err?.response?.data?.message || '删除帖子失败')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (loading) {
     return <div className="px-6 py-10 text-gray-500">正在加载帖子...</div>
@@ -65,12 +85,24 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                <Link
-                  to={`/posts/${post.id}`}
-                  className="rounded-lg border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  查看详情
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/posts/${post.id}`}
+                    className="rounded-lg border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    查看详情
+                  </Link>
+
+                  {user?.id === post.authorId && (
+                    <button
+                      onClick={() => handleDeletePost(post.id)}
+                      disabled={deletingId === post.id}
+                      className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {deletingId === post.id ? '删除中...' : '删除'}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {post.coverImage && (
@@ -87,7 +119,10 @@ export default function HomePage() {
 
               <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                 <span>评论 {post._count.comments}</span>
-                <LikeButton postId={post.id} initialLikesCount={post._count.likes} />
+                <LikeButton
+                  postId={post.id}
+                  initialLikesCount={post._count.likes}
+                />
               </div>
             </article>
           ))

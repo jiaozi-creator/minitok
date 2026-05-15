@@ -16,4 +16,9 @@ export const postService = {
     const response = await api.post<PostItem>('/posts', data)
     return response.data
   },
+
+  async deletePost(id: number) {
+    const response = await api.delete<{ message: string }>(`/posts/${id}`)
+    return response.data
+  },
 }

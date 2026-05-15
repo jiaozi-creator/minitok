@@ -8,6 +8,7 @@ async function bootstrap() {
 
   const allowedOrigins = [
     'http://localhost:5173',
+    'https://minitok-psi.vercel.app',
     process.env.FRONTEND_URL,
   ].filter(Boolean) as string[]
 

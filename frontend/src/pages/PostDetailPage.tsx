@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import LikeButton from '../components/LikeButton'
 import { commentService } from '../services/comment.service'
 import { postService } from '../services/post.service'
 import { useAuthStore } from '../store/auth.store'
 import type { PostDetail } from '../types/post'
-import LikeButton from '../components/LikeButton'
 
 export default function PostDetailPage() {
+  const navigate = useNavigate()
   const { id } = useParams()
   const postId = Number(id)
 
@@ -17,7 +18,10 @@ export default function PostDetailPage() {
   const [error, setError] = useState('')
   const [commentContent, setCommentContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
+    null,
+  )
+  const [deletingPost, setDeletingPost] = useState(false)
 
   const fetchPostDetail = async () => {
     try {
@@ -41,6 +45,24 @@ export default function PostDetailPage() {
     fetchPostDetail()
   }, [postId])
 
+  const handleDeletePost = async () => {
+    if (!post) return
+
+    const confirmed = window.confirm('确定要删除这篇帖子吗？')
+    if (!confirmed) return
+
+    setDeletingPost(true)
+
+    try {
+      await postService.deletePost(post.id)
+      navigate('/')
+    } catch (err: any) {
+      setError(err?.response?.data?.message || '删除帖子失败')
+    } finally {
+      setDeletingPost(false)
+    }
+  }
+
   const handleSubmitComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -62,7 +84,7 @@ export default function PostDetailPage() {
   }
 
   const handleDeleteComment = async (commentId: number) => {
-    setDeletingId(commentId)
+    setDeletingCommentId(commentId)
 
     try {
       await commentService.deleteComment(commentId)
@@ -70,7 +92,7 @@ export default function PostDetailPage() {
     } catch (err: any) {
       setError(err?.response?.data?.message || '删除评论失败')
     } finally {
-      setDeletingId(null)
+      setDeletingCommentId(null)
     }
   }
 
@@ -95,12 +117,27 @@ export default function PostDetailPage() {
       </div>
 
       <article className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-        <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+
+          {user?.id === post.authorId && (
+            <button
+              onClick={handleDeletePost}
+              disabled={deletingPost}
+              className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+            >
+              {deletingPost ? '删除中...' : '删除帖子'}
+            </button>
+          )}
+        </div>
 
         <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
           <span>作者：{post.author.username}</span>
           <span>评论 {post._count.comments}</span>
-          <LikeButton postId={post.id} initialLikesCount={post._count.likes} />
+          <LikeButton
+            postId={post.id}
+            initialLikesCount={post._count.likes}
+          />
         </div>
 
         {post.coverImage && (
@@ -150,7 +187,9 @@ export default function PostDetailPage() {
 
         <div className="mt-6 space-y-4">
           {post.comments.length === 0 ? (
-            <div className="text-sm text-gray-500">还没有评论，来发表第一条吧。</div>
+            <div className="text-sm text-gray-500">
+              还没有评论，来发表第一条吧。
+            </div>
           ) : (
             post.comments.map((comment) => (
               <div
@@ -170,10 +209,12 @@ export default function PostDetailPage() {
                   {user?.id === comment.userId && (
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      disabled={deletingId === comment.id}
+                      disabled={deletingCommentId === comment.id}
                       className="text-sm text-red-500 hover:text-red-600 disabled:opacity-60"
                     >
-                      {deletingId === comment.id ? '删除中...' : '删除'}
+                      {deletingCommentId === comment.id
+                        ? '删除中...'
+                        : '删除'}
                     </button>
                   )}
                 </div>
