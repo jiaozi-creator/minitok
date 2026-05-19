@@ -49,3 +49,22 @@ export interface CreatePostPayload {
 export interface CreateCommentPayload {
   content: string
 }
+
+export interface PostsPaginationMeta {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+}
+
+export interface PaginatedPostsResponse {
+  items: PostItem[]
+  meta: PostsPaginationMeta
+}
+
+export interface GetPostsParams {
+  page?: number
+  pageSize?: number
+  keyword?: string
+}

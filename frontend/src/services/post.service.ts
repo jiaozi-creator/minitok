@@ -1,9 +1,18 @@
 import api from './api'
-import type { CreatePostPayload, PostDetail, PostItem } from '../types/post'
+import type {
+  CreatePostPayload,
+  GetPostsParams,
+  PaginatedPostsResponse,
+  PostDetail,
+  PostItem,
+} from '../types/post'
 
 export const postService = {
-  async getPosts() {
-    const response = await api.get<PostItem[]>('/posts')
+  async getPosts(params?: GetPostsParams) {
+    const response = await api.get<PaginatedPostsResponse>('/posts', {
+      params,
+    })
+
     return response.data
   },
 

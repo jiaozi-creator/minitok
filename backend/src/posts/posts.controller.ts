@@ -7,6 +7,7 @@
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common'
@@ -17,6 +18,7 @@ import {
 } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { CreatePostDto } from './dto/create-post.dto'
+import { QueryPostsDto } from './dto/query-posts.dto'
 import { UpdatePostDto } from './dto/update-post.dto'
 import { PostsService } from './posts.service'
 
@@ -35,8 +37,8 @@ export class PostsController {
 
   @Get()
   @ApiOperation({ summary: '获取帖子列表' })
-  findAll() {
-    return this.postsService.findAll()
+  findAll(@Query() query: QueryPostsDto) {
+    return this.postsService.findAll(query)
   }
 
   @Get(':id')

@@ -5,6 +5,7 @@
 } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreatePostDto } from './dto/create-post.dto'
+import { QueryPostsDto } from './dto/query-posts.dto'
 import { UpdatePostDto } from './dto/update-post.dto'
 
 @Injectable()
@@ -39,28 +40,72 @@ export class PostsService {
     })
   }
 
-  findAll() {
-    return this.prisma.post.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            bio: true,
+  async findAll(query: QueryPostsDto) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const pageSize = Math.min(50, Math.max(1, Number(query.pageSize) || 6))
+    const skip = (page - 1) * pageSize
+    const keyword = query.keyword?.trim()
+
+    const where = keyword
+      ? {
+          OR: [
+            {
+              title: {
+                contains: keyword,
+              },
+            },
+            {
+              content: {
+                contains: keyword,
+              },
+            },
+          ],
+        }
+      : undefined
+
+    const [items, total] = await Promise.all([
+      this.prisma.post.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              username: true,
+              avatar: true,
+              bio: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              likes: true,
+            },
           },
         },
-        _count: {
-          select: {
-            comments: true,
-            likes: true,
-          },
-        },
+      }),
+
+      this.prisma.post.count({
+        where,
+      }),
+    ])
+
+    const totalPages = Math.ceil(total / pageSize)
+
+    return {
+      items,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
       },
-    })
+    }
   }
 
   async findOne(id: number) {
