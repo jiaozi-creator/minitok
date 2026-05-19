@@ -424,19 +424,6 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-## 安全说明
-
-建议 `.gitignore` 至少包含：
-
-```gitignore
-.env
-.env.*
-!.env.example
-node_modules
-dist
-coverage
-```
-
 ## 作者
 
 - GitHub：[@jiaozi-creator](https://github.com/jiaozi-creator)
